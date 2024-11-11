@@ -1,0 +1,25 @@
+Metadata-Version: 2.1
+Name: gc_simulation_utilities
+Version: 0.1
+Summary: Functions to help analyse globular cluster simulation models.
+Home-page: https://github.com/finn-pal/gc_simulation_utilities
+Author: Finn Pal
+Author-email: f.pal@unsw.edu.au
+Requires-Python: >=3.11
+Requires-Dist: contourpy==1.3.0
+Requires-Dist: cycler==0.12.1
+Requires-Dist: fonttools==4.54.1
+Requires-Dist: gizmo_analysis==1.0.2
+Requires-Dist: h5py==3.12.1
+Requires-Dist: halo_analysis==1.0.2
+Requires-Dist: kiwisolver==1.4.7
+Requires-Dist: matplotlib==3.9.2
+Requires-Dist: numpy==2.1.3
+Requires-Dist: packaging==24.2
+Requires-Dist: pillow==11.0.0
+Requires-Dist: pyparsing==3.2.0
+Requires-Dist: python-dateutil==2.9.0.post0
+Requires-Dist: scipy==1.14.1
+Requires-Dist: six==1.16.0
+Requires-Dist: tqdm==4.67.0
+Requires-Dist: utilities_awetzel==1.0.2

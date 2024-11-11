@@ -42,7 +42,9 @@ def get_halo_cid(halt, halo_tid: int, fire_dir: str) -> tuple[int, int]:
     snap = halt["snapshot"][idx]
     halo_idx = halt["catalog.index"][idx]
     # import the relevant halo catalogue
-    hal = halo.io.IO.read_catalogs("index", snap, simulation_directory=fire_dir, species=None)
+    hal = halo.io.IO.read_catalogs(
+        "index", snap, simulation_directory=fire_dir, species=None
+    )
     # get the halo catalogue id (cid)
     halo_cid = hal["id"][halo_idx]
     return halo_cid, snap
@@ -147,7 +149,9 @@ def get_halo_tree(sim: str, sim_dir: str):
     """
     fire_dir = sim_dir + sim + "/" + sim + "_res7100/"
 
-    for _ in tqdm(range(1), ncols=150, desc="Retrieving Halo Tree....................."):
+    for _ in tqdm(
+        range(1), ncols=150, desc="Retrieving Halo Tree....................."
+    ):
         block_print()  # block verbose print statements
         halt = halo.io.IO.read_tree(simulation_directory=fire_dir)
         enable_print()
@@ -167,9 +171,13 @@ def open_snapshot(snapshot: int, fire_dir: str):
     Returns:
         _type_: The particle details for a given snapshot
     """
-    for _ in tqdm(range(1), ncols=150, desc="Retrieving Snapshot %d.................." % snapshot):
+    for _ in tqdm(
+        range(1), ncols=150, desc="Retrieving Snapshot %d.................." % snapshot
+    ):
         block_print()  # block verbose print statements
-        part = gizmo.io.Read.read_snapshots("all", "index", snapshot, fire_dir, assign_hosts_rotation=True)
+        part = gizmo.io.Read.read_snapshots(
+            "all", "index", snapshot, fire_dir, assign_hosts_rotation=True
+        )
         enable_print()
     return part
 
@@ -196,6 +204,16 @@ def snapshot_name(snap_num: int):
 
 
 def get_main_vir_rad_snap(halt, main_halo_tid: int, snapshot: int) -> list[int]:
+    """
+    Get a list of the halo tree ids for the most massive progenitors of the main galaxy from gizmo halo tree
+
+    Args:
+        halt (_type_): Halo tree
+
+    Returns:
+        list[int]: List of halo tree halo ids (tid) tracing the main progenitors of the most massive galaxy at
+        z = 0.
+    """
     # main galaxy has index 0 in the halo tree
     main_halo_idx = np.where(halt["tid"] == main_halo_tid)[0][0]
     main_halo_lst = [main_halo_idx]

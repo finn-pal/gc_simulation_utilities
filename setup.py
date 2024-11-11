@@ -18,9 +18,14 @@ def get_requirements():
 
 
 setup(
-    name="gc_simulation_utilities",  # the name of the module
-    packages=["src"],  # the location of the module
-    version=0.1,
+    name="gc_simulation_utilities",
+    version="0.1",
+    packages=["gc_utils"],
+    package_dir={"gc_utils": "src"},
     install_requires=get_requirements(),
     python_requires=">=3.11",
+    url="https://github.com/finn-pal/gc_simulation_utilities",
+    author="Finn Pal",
+    author_email="f.pal@unsw.edu.au",
+    description="Functions to help analyse globular cluster simulation models.",
 )
