@@ -224,3 +224,23 @@ def get_main_vir_rad_snap(halt, main_halo_tid: int, snapshot: int) -> list[int]:
     rad_interest = halt["radius"][halt_idx_interest]
 
     return rad_interest
+
+
+def particle_type(quality: int) -> str:
+    """
+    Using the data quality flag from gc model return particle type. From the gc model:
+    # 2: good (star with t_s > t_form - time_lag):
+    # 1: half (star with t_s < t_form - time_lag)
+    # 0: bad (dm particle)
+
+    Args:
+        quality (int): Quality flag output from gc formation model (assign function).
+
+    Returns:
+        str: Particle type. Either "star" or "dark".
+    """
+    if quality == 0:
+        part = "dark"
+    else:
+        part = "star"
+    return part
