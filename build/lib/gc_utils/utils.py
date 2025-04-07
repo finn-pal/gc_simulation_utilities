@@ -472,14 +472,3 @@ def create_gc_part_idx_dict(part, proc_data, it, snapshot):
             id_idx_map["star"][gc_id] = corrected_idx
 
     return id_idx_map, gc_id_snap, ptype_snap
-
-
-def get_halo_prog_at_snap(halt, halo_tid, snapshot):
-    idx = np.where(halt["tid"] == halo_tid)[0][0]
-    snapshot_hold = halt["snapshot"][idx]
-
-    while snapshot_hold > snapshot:
-        idx = halt["progenitor.main.index"][idx]
-        snapshot_hold = halt["snapshot"][idx]
-
-    return halt["tid"][idx]

@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: gc_simulation_utilities
 Version: 0.1
 Summary: Functions to help analyse globular cluster simulation models.
@@ -23,3 +23,9 @@ Requires-Dist: scipy==1.14.1
 Requires-Dist: six==1.16.0
 Requires-Dist: tqdm==4.67.0
 Requires-Dist: utilities_awetzel==1.0.2
+Dynamic: author
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
