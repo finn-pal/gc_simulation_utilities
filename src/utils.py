@@ -296,8 +296,7 @@ def get_main_prog_at_snap(halt, main_halo_tid, snapshot):
     # check halo_tid matches snapshot
     halo_idx = np.where(halt["tid"] == halo_tid)[0][0]
     if halt["snapshot"][halo_idx] != snapshot:
-        print("Halo tid does not match at required snapshot")
-        exit(1)  # Stops execution with a non-zero exit code
+        raise RuntimeError("Halo tid does not match at required snapshot")
 
     return halo_tid
 
@@ -305,8 +304,7 @@ def get_main_prog_at_snap(halt, main_halo_tid, snapshot):
 def get_halo_details(part, halt, halo_tid, snapshot):
     # do a check to ensure part matches intended snap
     if part.snapshot["index"] != snapshot:
-        print("Part selection does not match intended snapshot for halo details")
-        exit(1)  # Stops execution with a non-zero exit code
+        raise RuntimeError("Part selection does not match intended snapshot for halo details")
 
     halo_index = np.where(halt["tid"] == halo_tid)[0][0]
 
@@ -354,11 +352,85 @@ def get_halo_details(part, halt, halo_tid, snapshot):
     return halo_detail_dict
 
 
-def get_particle_halo_pos_vel(part, gc_id, ptype, halo_detail_dict, coordinates="cartesian"):
+def get_dm_halo_details(part, halt, halo_tid, snapshot, rotation=False):
+    # do a check to ensure part matches intended snap
+    if part.snapshot["index"] != snapshot:
+        raise RuntimeError("Part selection does not match intended snapshot for halo details")
+
+    halo_index = np.where(halt["tid"] == halo_tid)[0][0]
+
+    center_pos = halt["position"][halo_index]
+    center_vel = halt["velocity"][halo_index]
+
+    halo_detail_dict = {
+        "tid": halo_tid,
+        "snapshot": snapshot,
+        "position": center_pos,
+        "velocity": center_vel,
+        # "rotation": center_rot["rotation"][0],
+        # "axis.ratios": center_rot["axis.ratios"],
+    }
+
+    if not rotation:
+        halo_detail_dict["rotation"] = None
+        halo_detail_dict["axis.ratios"] = None
+
+    else:
+        # check to see if any start particles to rotate about
+        dist = ut.particle.get_distances_wrt_center(
+            part,
+            species="star",
+            center_position=center_pos,
+            rotation=None,
+            total_distance=True,
+        )
+
+        ctr_indices = np.where(dist < 10)[0]
+
+        # if star particles to rotate about
+        if len(ctr_indices) > 0:
+            center_rot = ut.particle.get_principal_axes(
+                part,
+                "star",
+                distance_max=10,
+                mass_percent=90,
+                age_percent=25,
+                center_positions=center_pos,
+                center_velocities=center_vel,
+                return_single_array=False,
+                verbose=False,
+            )
+
+        else:
+            center_rot = ut.particle.get_principal_axes(
+                part,
+                "dark",
+                distance_max=10,
+                mass_percent=90,
+                center_positions=center_pos,
+                center_velocities=center_vel,
+                return_single_array=False,
+                verbose=False,
+            )
+
+        halo_detail_dict["rotation"] = center_rot["rotation"][0]
+        halo_detail_dict["axis.ratios"] = center_rot["axis.ratios"]
+
+    return halo_detail_dict
+
+
+def get_particle_halo_pos_vel(
+    part,
+    gc_id,
+    ptype,
+    halo_detail_dict,
+    coordinates="cartesian",
+    total_distance: bool = False,
+    total_velocity: bool = False,
+):
     # do a check to ensure part matches intended snap
     if part.snapshot["index"] != halo_detail_dict["snapshot"]:
-        print("Part selection does not match intended snapshot for halo details")
-        exit(1)  # Stops execution with a non-zero exit code
+        raise RuntimeError("Part selection does not match intended snapshot for halo details")
 
     part_idx = np.where(part[ptype]["id"] == gc_id)[0][0]
 
@@ -369,6 +441,7 @@ def get_particle_halo_pos_vel(part, gc_id, ptype, halo_detail_dict, coordinates=
         center_position=halo_detail_dict["position"],
         rotation=halo_detail_dict["rotation"],
         coordinate_system=coordinates,
+        total_distance=total_distance,
     )
 
     vel_vect = ut.particle.get_velocities_wrt_center(
@@ -379,107 +452,37 @@ def get_particle_halo_pos_vel(part, gc_id, ptype, halo_detail_dict, coordinates=
         center_velocity=halo_detail_dict["velocity"],
         rotation=halo_detail_dict["rotation"],
         coordinate_system=coordinates,
+        total_velocity=total_velocity,
     )
 
-    return dist_vect[0], vel_vect[0]
+    # for whatever reason when cartesian coordinates used its an array within an array but when cylidnrical
+    # or spherical this doesn't happen
+    if coordinates == "cartesian":
+        dist_vect = dist_vect[0]
+        vel_vect = vel_vect[0]
 
-
-def get_correct_gc_part_idx(part, gc_id, gc_snapform, snapshot, ptype="star"):
-    # this is a temporary solution. I do not know what to do if two possible particles have the same
-    # formation snapshot
-
-    # do a check to ensure part matches intended snap
-    if part.snapshot["index"] != snapshot:
-        print("Part selection does not match intended snapshot for halo details")
-        exit(1)  # Stops execution with a non-zero exit code
-
-    part_idxs = np.where(part[ptype]["id"] == gc_id)[0]
-    part_snapform = part[ptype].prop("form.snapshot", part_idxs)
-
-    idx = np.where(part_snapform == gc_snapform)[0]
-
-    if len(idx) > 1:
-        print("Multiple particles have same formation snapshot as GC, cannot determine correct GC particle")
-        exit(1)  # Stops execution with a non-zero exit code
-
-    if len(idx) == 0:
-        print("No particles have same formation snapshot as GC, cannot determine correct GC particle")
-        exit(1)  # Stops execution with a non-zero exit code
-
-    correct_part_idx = part_idxs[idx][0]
-
-    if part["star"]["id"][correct_part_idx] != gc_id:
-        print("Error in determining correct GC particle index")
-        exit(1)  # Stops execution with a non-zero exit code
-
-    return correct_part_idx
-
-
-def remove_duplicates_with_report(arr):
-    arr = np.array(arr)  # Convert the list to a numpy array
-    unique_elements, counts = np.unique(arr, return_counts=True)  # Get unique elements and their counts
-    duplicates = unique_elements[counts > 1]  # Duplicates are those that appear more than once
-    unique_list = unique_elements.tolist()  # Convert unique elements back to a list
-
-    return unique_list, duplicates.tolist()  # Return unique and duplicate lists
-
-
-def create_gc_part_idx_dict(part, proc_data, it, snapshot):
-    it_id = iteration_name(it)
-    snap_id = snapshot_name(snapshot)
-
-    gc_id_snap = proc_data[it_id]["snapshots"][snap_id]["gc_id"][()]
-
-    ptype_byte_snap = proc_data[it_id]["snapshots"][snap_id]["ptype"]
-    ptype_snap = [ptype.decode("utf-8") for ptype in ptype_byte_snap]
-
-    # Step 1: group GCs by particle type
-    gc_by_ptype = {}
-    gc_by_ptype["star"] = []
-    gc_by_ptype["dark"] = []
-
-    for gc, ptype in zip(gc_id_snap, ptype_snap):
-        gc_by_ptype[ptype].append(gc)
-
-    # Step 2: for each ptype, build a small dict: gc_id → index
-    id_idx_map = {}
-
-    for ptype, gc_ids in gc_by_ptype.items():
-        ids = part[ptype]["id"]  # potentially millions of entries
-        # gc_ids = np.array(gc_ids)  # small subset
-
-        # Check which of these are in the main list
-        mask = np.isin(ids, gc_ids)
-        idxs = np.nonzero(mask)[0]
-        found_ids = ids[idxs]
-
-        # Build small, efficient lookup: GC ID → array index
-        id_idx_map[ptype] = dict(zip(found_ids, idxs))
-
-        # concerned abour duplciate star ids
-        if ptype == "star":
-            _, duplicates_ids = remove_duplicates_with_report(found_ids)
-
-    # only concerned with duplciates in star
-    for gc_id in id_idx_map["star"].keys():
-        if gc_id in duplicates_ids:
-            ana_mask = proc_data[it_id]["source"]["analyse_flag"][()] == 1
-            gc_mask = proc_data[it_id]["source"]["gc_id"][()] == gc_id
-            snapform = proc_data[it_id]["source"]["snap_zform"][ana_mask & gc_mask][0]
-
-            corrected_idx = get_correct_gc_part_idx(part, gc_id, snapform, snapshot)
-
-            id_idx_map["star"][gc_id] = corrected_idx
-
-    return id_idx_map, gc_id_snap, ptype_snap
+    return dist_vect, vel_vect
 
 
 def get_halo_prog_at_snap(halt, halo_tid, snapshot):
-    idx = np.where(halt["tid"] == halo_tid)[0][0]
+    # idx = np.where(halt["tid"] == halo_tid)[0][0]
+    idx = np.flatnonzero(halt["tid"] == halo_tid)[0]  # testing for improved speed
     snapshot_hold = halt["snapshot"][idx]
 
-    while snapshot_hold > snapshot:
-        idx = halt["progenitor.main.index"][idx]
-        snapshot_hold = halt["snapshot"][idx]
+    if snapshot_hold > snapshot:
+        while snapshot_hold > snapshot:
+            idx = halt["progenitor.main.index"][idx]
+            snapshot_hold = halt["snapshot"][idx]
+
+    if snapshot_hold < snapshot:
+        while snapshot_hold < snapshot:
+            idx = halt["descendant.index"][idx]
+            snapshot_hold = halt["snapshot"][idx]
+
+    else:
+        idx = idx
+
+    if snapshot_hold != snapshot:
+        raise RuntimeError("Halo tid does not match at required snapshot")
 
     return halt["tid"][idx]
