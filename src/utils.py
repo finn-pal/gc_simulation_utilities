@@ -421,7 +421,8 @@ def get_dm_halo_details(part, halt, halo_tid, snapshot, rotation=False):
 
 def get_particle_halo_pos_vel(
     part,
-    gc_id,
+    # gc_id,
+    part_idx,
     ptype,
     halo_detail_dict,
     coordinates="cartesian",
@@ -432,7 +433,7 @@ def get_particle_halo_pos_vel(
     if part.snapshot["index"] != halo_detail_dict["snapshot"]:
         raise RuntimeError("Part selection does not match intended snapshot for halo details")
 
-    part_idx = np.where(part[ptype]["id"] == gc_id)[0][0]
+    # part_idx = np.where(part[ptype]["id"] == gc_id)[0][0]
 
     dist_vect = ut.particle.get_distances_wrt_center(
         part,

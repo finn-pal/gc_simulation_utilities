@@ -421,7 +421,8 @@ def get_dm_halo_details(part, halt, halo_tid, snapshot, rotation=False):
 
 def get_particle_halo_pos_vel(
     part,
-    gc_id,
+    # gc_id,
+    part_idx,
     ptype,
     halo_detail_dict,
     coordinates="cartesian",
@@ -432,7 +433,7 @@ def get_particle_halo_pos_vel(
     if part.snapshot["index"] != halo_detail_dict["snapshot"]:
         raise RuntimeError("Part selection does not match intended snapshot for halo details")
 
-    part_idx = np.where(part[ptype]["id"] == gc_id)[0][0]
+    # part_idx = np.where(part[ptype]["id"] == gc_id)[0][0]
 
     dist_vect = ut.particle.get_distances_wrt_center(
         part,
@@ -486,70 +487,3 @@ def get_halo_prog_at_snap(halt, halo_tid, snapshot):
         raise RuntimeError("Halo tid does not match at required snapshot")
 
     return halt["tid"][idx]
-
-
-# def get_particle_halo_pos_vel_basic(
-#     part,
-#     halt,
-#     gc_id,
-#     ptype,
-#     halo_tid,
-#     rotation: bool = True,
-#     coordinates: str = "cartesian",
-#     total_distance: bool = False,
-#     total_velocity: bool = False,
-#     rmax_ctr: float = 10,
-# ):
-#     halo_idx = np.where(halt["tid"] == halo_tid)[0][0]
-
-#     # do a check to ensure part matches intended snap
-#     if part.snapshot["index"] != halt["snapshot"][halo_idx]:
-#         raise RuntimeError("Part selection does not match intended snapshot for halo details")
-
-#     part_idx = np.where(part[ptype]["id"] == gc_id)[0][0]
-
-#     # if rotation:
-#     #     dist = ut.particle.get_distances_wrt_center(
-#     #         part,
-#     #         species="star",
-#     #         center_position=halt["position"][halo_idx],
-#     #         rotation=None,
-#     #         total_distance=True,
-#     #     )
-
-#     #     sp = "star"
-#     #     ctr_indices = np.where(dist[sp] < rmax_ctr)[0]
-
-#     #     rotation = ut.particle.get_principal_axes(part, species_name="star", part_indicess=ctr_indices)
-
-#     # else:
-#     #     rotation = None
-
-#     dist_vect = ut.particle.get_distances_wrt_center(
-#         part,
-#         species=[ptype],
-#         part_indicess=np.array([part_idx]),
-#         center_position=halt["position"][halo_idx],
-#         rotation=rotation,
-#         coordinate_system=coordinates,
-#         total_distance=total_distance,
-#     )
-
-#     vel_vect = ut.particle.get_velocities_wrt_center(
-#         part,
-#         species=[ptype],
-#         part_indicess=np.array([part_idx]),
-#         center_position=halt["position"][halo_idx],
-#         center_velocity=halt["velocity"][halo_idx],
-#         rotation=rotation,
-#         coordinate_system=coordinates,
-#         total_velocity=total_velocity,
-#     )
-
-#     # for whatever reason when cartesian coordinates used its an array within an array but when cylidnrical
-#     # or spherical this doesn't happen
-#     if coordinates == "cartesian":
-#         dist_vect = dist_vect[0]
-#         vel_vect = vel_vect[0]
-
-#     return dist_vect, vel_vect
