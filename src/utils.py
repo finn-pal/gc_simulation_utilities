@@ -136,7 +136,7 @@ def iteration_name(it: int) -> str:
     return it_id
 
 
-def get_halo_tree(sim: str, sim_dir: str, assign_hosts_rotation: bool = False):
+def get_halo_tree(sim: str, sim_dir: str, assign_hosts_rotation: bool = False, species=None):
     """
     Given directory to simulation returns halo tree.
 
@@ -152,7 +152,7 @@ def get_halo_tree(sim: str, sim_dir: str, assign_hosts_rotation: bool = False):
     for _ in tqdm(range(1), ncols=150, desc="Retrieving Halo Tree....................."):
         block_print()  # block verbose print statements
         halt = halo.io.IO.read_tree(
-            simulation_directory=fire_dir, assign_hosts_rotation=assign_hosts_rotation
+            simulation_directory=fire_dir, assign_hosts_rotation=assign_hosts_rotation, species=species
         )
         enable_print()
 
