@@ -255,7 +255,7 @@ def particle_type(quality: int) -> str:
     return part
 
 
-def get_different_snap_lst(main_halo_tid, halt, sim, sim_dir):
+def get_different_snap_lst(main_halo_tid, halt, sim, sim_dir, snap_lim=46):
     snap_pub_dir = sim_dir + "/snapshot_times_public.txt"
     fire_dir = sim_dir + sim + "/" + sim + "_res7100/"
 
@@ -268,12 +268,13 @@ def get_different_snap_lst(main_halo_tid, halt, sim, sim_dir):
         "lookback_time_Gyr",
         "time_width_Myr",
     ]
+    snap_lst = snap_pub_data[snap_pub_data["index"] >= snap_lim]["index"]
 
     tid_main_lst = main_prog_halt(halt, main_halo_tid)
 
     different_host_lst = []
 
-    for snap in snap_pub_data["index"]:
+    for snap in snap_lst:
         block_print()
         hal = halo.io.IO.read_catalogs("index", snap, fire_dir)
         enable_print()
